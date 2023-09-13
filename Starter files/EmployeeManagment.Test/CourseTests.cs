@@ -3,8 +3,7 @@
 namespace EmployeeManagment.Test;
 public class CourseTests
 {
-
-    [Fact]
+    [Fact(Skip ="Skip for a demo purpose")]
     public void CourseConstructor_ConstructCourse_IsNewMustBeTrue()
     {
         // AAA
@@ -16,5 +15,4 @@ public class CourseTests
         // Assert
         Assert.True(course.IsNew);
     }
-
 }

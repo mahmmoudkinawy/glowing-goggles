@@ -1,28 +1,43 @@
-﻿using EmployeeManagement.Business;
-using EmployeeManagement.Business.EventArguments;
+﻿using EmployeeManagement.Business.EventArguments;
 using EmployeeManagement.Business.Exceptions;
 using EmployeeManagement.DataAccess.Entities;
-using EmployeeManagment.Test.Services;
+using EmployeeManagment.Test.Fixtures;
+using Xunit.Abstractions;
 
 namespace EmployeeManagment.Test;
-public class EmployeeServiceTests
+
+[Collection("EmployeeServiceCollection")]
+public class EmployeeServiceTests // : IClassFixture<EmployeeServiceFixture>
 {
+    private readonly EmployeeServiceFixture _employeeServiceFixture;
+    private readonly ITestOutputHelper _testOutputHelper;
+
+    public EmployeeServiceTests(EmployeeServiceFixture employeeServiceFixture,
+        ITestOutputHelper testOutputHelper)
+    {
+        _employeeServiceFixture = employeeServiceFixture ?? 
+            throw new ArgumentNullException(nameof(employeeServiceFixture));
+        _testOutputHelper = testOutputHelper ??
+            throw new ArgumentNullException(nameof(testOutputHelper));
+    }
+
     [Fact]
     public void CreateInternalEmployee_InternalEmployeeCreated_MustHaveAttendedFirstObligatoryCourse_WithObject()
     {
         // AAA
-        var employeeManagementTestDataRepository =
-            new EmployeeManagementTestDataRepository();
-        var employeeService = new EmployeeService(
-            employeeManagementTestDataRepository,
-            new EmployeeFactory());
-
-        var obligatoryCourse = employeeManagementTestDataRepository
+        var obligatoryCourse = _employeeServiceFixture.EmployeeManagementTestDataRepository
             .GetCourse(Guid.Parse("37e03ca7-c730-4351-834c-b66f280cdb01"));
 
         // Act
-        var internalEmployee = employeeService
+        var internalEmployee = _employeeServiceFixture.EmployeeService
             .CreateInternalEmployee("Brooklyn", "Cannon");
+
+        _testOutputHelper.WriteLine($"Employee after Act: " +
+            $"{internalEmployee.FirstName} {internalEmployee.LastName}");
+
+        internalEmployee.AttendedCourses
+            .ForEach(c => 
+                _testOutputHelper.WriteLine($"Attended course: {c.Id} {c.Title}"));
 
         // Assert
         Assert.Contains(obligatoryCourse, internalEmployee.AttendedCourses);
@@ -32,14 +47,9 @@ public class EmployeeServiceTests
     public void CreateInternalEmployee_InternalEmployeeCreated_MustHaveAttendedFirstObligatoryCourse_WithPredicate()
     {
         // AAA
-        var employeeManagementTestDataRepository =
-            new EmployeeManagementTestDataRepository();
-        var employeeService = new EmployeeService(
-            employeeManagementTestDataRepository,
-            new EmployeeFactory());
 
         // Act
-        var internalEmployee = employeeService
+        var internalEmployee = _employeeServiceFixture.EmployeeService
             .CreateInternalEmployee("Brooklyn", "Cannon");
 
         // Assert
@@ -52,14 +62,9 @@ public class EmployeeServiceTests
     public void CreateInternalEmployee_InternalEmployeeCreated_MustHaveAttendedFirstObligatoryCourse_WithPredicateTwo()
     {
         // AAA
-        var employeeManagementTestDataRepository =
-            new EmployeeManagementTestDataRepository();
-        var employeeService = new EmployeeService(
-            employeeManagementTestDataRepository,
-            new EmployeeFactory());
 
         // Act
-        var internalEmployee = employeeService
+        var internalEmployee = _employeeServiceFixture.EmployeeService
             .CreateInternalEmployee("Brooklyn", "Cannon");
 
         // Assert
@@ -72,19 +77,16 @@ public class EmployeeServiceTests
     public void CreateInternalEmployee_InternalEmployeeCreated_MustHaveAttendedFirstObligatoryCourse_WithPredicateThree()
     {
         // AAA
-        var employeeManagementTestDataRepository =
-            new EmployeeManagementTestDataRepository();
-        var employeeService = new EmployeeService(
-            employeeManagementTestDataRepository,
-            new EmployeeFactory());
 
-        var obligatoryCourses = employeeManagementTestDataRepository
+        var obligatoryCourses = _employeeServiceFixture
+            .EmployeeManagementTestDataRepository
             .GetCourses(
                 Guid.Parse("37e03ca7-c730-4351-834c-b66f280cdb01"),
                 Guid.Parse("1fd115cf-f44c-4982-86bc-a8fe2e4ff83e"));
 
         // Act
-        var internalEmployee = employeeService
+        var internalEmployee = _employeeServiceFixture
+            .EmployeeService
             .CreateInternalEmployee("Brooklyn", "Cannon");
 
         // Assert
@@ -95,19 +97,14 @@ public class EmployeeServiceTests
     public void CreateInternalEmployee_InternalEmployeeCreated_AttendedCoursesMustBeBeNew()
     {
         // AAA
-        var employeeManagementTestDataRepository =
-            new EmployeeManagementTestDataRepository();
-        var employeeService = new EmployeeService(
-            employeeManagementTestDataRepository,
-            new EmployeeFactory());
 
-        var obligatoryCourses = employeeManagementTestDataRepository
+        var obligatoryCourses = _employeeServiceFixture.EmployeeManagementTestDataRepository
             .GetCourses(
                 Guid.Parse("37e03ca7-c730-4351-834c-b66f280cdb01"),
                 Guid.Parse("1fd115cf-f44c-4982-86bc-a8fe2e4ff83e"));
 
         // Act
-        var internalEmployee = employeeService
+        var internalEmployee = _employeeServiceFixture.EmployeeService
             .CreateInternalEmployee("Brooklyn", "Cannon");
 
         // Assert
@@ -126,19 +123,16 @@ public class EmployeeServiceTests
     public async Task CreateInternalEmployee_InternalEmployeeCreated_AttendedCoursesMustBeBeNew_Async()
     {
         // AAA
-        var employeeManagementTestDataRepository =
-            new EmployeeManagementTestDataRepository();
-        var employeeService = new EmployeeService(
-            employeeManagementTestDataRepository,
-            new EmployeeFactory());
 
-        var obligatoryCourses = await employeeManagementTestDataRepository
+        var obligatoryCourses = await _employeeServiceFixture
+            .EmployeeManagementTestDataRepository
             .GetCoursesAsync(
                 Guid.Parse("37e03ca7-c730-4351-834c-b66f280cdb01"),
                 Guid.Parse("1fd115cf-f44c-4982-86bc-a8fe2e4ff83e"));
 
         // Act
-        var internalEmployee = await employeeService
+        var internalEmployee = await _employeeServiceFixture
+            .EmployeeService
             .CreateInternalEmployeeAsync("Brooklyn", "Cannon");
 
         // Assert
@@ -155,23 +149,20 @@ public class EmployeeServiceTests
     [Fact]
     public async Task GiveRaise_RaiseBelowMinimumGiven_EmployeeInvalidRaiseExceptionMustBeThrown()
     {
-        var employeeService = new EmployeeService(
-            new EmployeeManagementTestDataRepository(),
-            new EmployeeFactory());
         var internalEmployee = new InternalEmployee(
             "Brooklyn", "Cannon", 5, 3000, false, 1);
 
         // Act
         await Assert.ThrowsAsync<EmployeeInvalidRaiseException>(
-             async () => await employeeService.GiveRaiseAsync(internalEmployee, 50));
+             async () => await _employeeServiceFixture.EmployeeService
+                .GiveRaiseAsync(internalEmployee, 50));
     }
 
     [Fact]
     public void NotifyOfAbsence_EmployeeIsAbsent_OnEmployeeIsAbsentMustBeTriggered()
     {
-        var employeeService = new EmployeeService(
-            new EmployeeManagementTestDataRepository(),
-            new EmployeeFactory());
+        var employeeService = _employeeServiceFixture.EmployeeService;
+
         var internalEmployee = new InternalEmployee(
             "Brooklyn", "Cannon", 5, 3000, false, 1);
 
